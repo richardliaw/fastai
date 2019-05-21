@@ -8,12 +8,14 @@ import fastprogress, subprocess, platform
 
 __all__ = ['show_install', 'check_perf']
 
+
 def get_env(name):
     "Return env var value if it's defined and not an empty string, or return Unknown"
-    res = os.environ.get(name,'')
+    res = os.environ.get(name, '')
     return res if len(res) else "Unknown"
 
-def show_install(show_nvidia_smi:bool=False):
+
+def show_install(show_nvidia_smi: bool = False):
     "Print user's setup information"
 
     import platform, fastai.version
@@ -25,13 +27,16 @@ def show_install(show_nvidia_smi:bool=False):
     rep.append(["python", platform.python_version()])
     rep.append(["fastai", fastai.__version__])
     rep.append(["fastprogress", fastprogress.__version__])
-    rep.append(["torch",  torch.__version__])
+    rep.append(["torch", torch.__version__])
 
     # nvidia-smi
     cmd = "nvidia-smi"
     have_nvidia_smi = False
-    try: result = subprocess.run(cmd.split(), shell=False, check=False, stdout=subprocess.PIPE)
-    except: pass
+    try:
+        result = subprocess.run(
+            cmd.split(), shell=False, check=False, stdout=subprocess.PIPE)
+    except:
+        pass
     else:
         if result.returncode == 0 and result.stdout: have_nvidia_smi = True
 
@@ -45,14 +50,17 @@ def show_install(show_nvidia_smi:bool=False):
         match = re.findall(r'Driver Version: +(\d+\.\d+)', smi)
         if match: rep.append(["nvidia driver", match[0]])
 
-    available = "available" if torch.cuda.is_available() else "**Not available** "
+    available = "available" if torch.cuda.is_available(
+    ) else "**Not available** "
     rep.append(["torch cuda", f"{torch.version.cuda} / is {available}"])
 
     # no point reporting on cudnn if cuda is not available, as it
     # seems to be enabled at times even on cpu-only setups
     if torch.cuda.is_available():
         enabled = "enabled" if torch.backends.cudnn.enabled else "**Not enabled** "
-        rep.append(["torch cudnn", f"{torch.backends.cudnn.version()} / is {enabled}"])
+        rep.append([
+            "torch cudnn", f"{torch.backends.cudnn.version()} / is {enabled}"
+        ])
 
     rep.append(["\n=== Hardware ===", None])
 
@@ -62,7 +70,8 @@ def show_install(show_nvidia_smi:bool=False):
     if have_nvidia_smi:
         try:
             cmd = "nvidia-smi --query-gpu=memory.total --format=csv,nounits,noheader"
-            result = subprocess.run(cmd.split(), shell=False, check=False, stdout=subprocess.PIPE)
+            result = subprocess.run(
+                cmd.split(), shell=False, check=False, stdout=subprocess.PIPE)
         except:
             print("have nvidia-smi, but failed to query it")
         else:
@@ -71,7 +80,6 @@ def show_install(show_nvidia_smi:bool=False):
                 gpu_total_mem = [int(x) for x in output.strip().split('\n')]
                 nvidia_gpu_cnt = len(gpu_total_mem)
 
-
     if nvidia_gpu_cnt: rep.append(["nvidia gpus", nvidia_gpu_cnt])
 
     torch_gpu_cnt = torch.cuda.device_count()
@@ -79,13 +87,19 @@ def show_install(show_nvidia_smi:bool=False):
         rep.append(["torch devices", torch_gpu_cnt])
         # information for each gpu
         for i in range(torch_gpu_cnt):
-            rep.append([f"  - gpu{i}", (f"{gpu_total_mem[i]}MB | " if gpu_total_mem else "") + torch.cuda.get_device_name(i)])
+            rep.append([
+                f"  - gpu{i}",
+                (f"{gpu_total_mem[i]}MB | "
+                 if gpu_total_mem else "") + torch.cuda.get_device_name(i)
+            ])
     else:
         if nvidia_gpu_cnt:
-            rep.append([f"Have {nvidia_gpu_cnt} GPU(s), but torch can't use them (check nvidia driver)", None])
+            rep.append([
+                f"Have {nvidia_gpu_cnt} GPU(s), but torch can't use them (check nvidia driver)",
+                None
+            ])
         else:
             rep.append([f"No GPUs available", None])
-
 
     rep.append(["\n=== Environment ===", None])
 
@@ -97,7 +111,7 @@ def show_install(show_nvidia_smi:bool=False):
             # full distro info
             rep.append(["distro", ' '.join(distro.linux_distribution())])
         else:
-            opt_mods.append('distro');
+            opt_mods.append('distro')
             # partial distro info
             rep.append(["distro", platform.uname().version])
 
@@ -119,12 +133,19 @@ def show_install(show_nvidia_smi:bool=False):
 
     print("```\n")
 
-    print("Please make sure to include opening/closing ``` when you paste into forums/github to make the reports appear formatted as code sections.\n")
+    print(
+        "Please make sure to include opening/closing ``` when you paste into forums/github to make the reports appear formatted as code sections.\n"
+    )
 
     if opt_mods:
-        print("Optional package(s) to enhance the diagnostics can be installed with:")
+        print(
+            "Optional package(s) to enhance the diagnostics can be installed with:"
+        )
         print(f"pip install {' '.join(opt_mods)}")
-        print("Once installed, re-run this utility to get the additional information")
+        print(
+            "Once installed, re-run this utility to get the additional information"
+        )
+
 
 def pypi_module_version_is_available(module, version):
     "Check whether module==version is available on pypi"
@@ -134,8 +155,12 @@ def pypi_module_version_is_available(module, version):
     # it "fails" and returns all the available versions in stderr
     try:
         cmd = f"pip install {module}=="
-        result = subprocess.run(cmd.split(), shell=False, check=False,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(
+            cmd.split(),
+            shell=False,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
     except Exception as e:
         print(f"Error: {e}")
         return None
@@ -146,6 +171,7 @@ def pypi_module_version_is_available(module, version):
         else:
             print(f"Some error in {cmd}")
             return None
+
 
 def check_perf():
     "Suggest how to improve the setup to speed things up"
@@ -161,20 +187,29 @@ def check_perf():
         if features.check_feature('libjpeg_turbo'):
             print("✔ libjpeg-turbo is on")
         else:
-            print("✘ libjpeg-turbo is not on. It's recommended you install libjpeg-turbo to speed up JPEG decoding. See https://docs.fast.ai/performance.html#libjpeg-turbo")
+            print(
+                "✘ libjpeg-turbo is not on. It's recommended you install libjpeg-turbo to speed up JPEG decoding. See https://docs.fast.ai/performance.html#libjpeg-turbo"
+            )
     else:
-        print(f"❓ libjpeg-turbo's status can't be derived - need Pillow(-SIMD)? >= 5.4.0 to tell, current version {Image.PILLOW_VERSION}")
+        print(
+            f"❓ libjpeg-turbo's status can't be derived - need Pillow(-SIMD)? >= 5.4.0 to tell, current version {Image.PILLOW_VERSION}"
+        )
         # XXX: remove this check/note once Pillow and Pillow-SIMD 5.4.0 is available
-        pillow_ver_5_4_is_avail = pypi_module_version_is_available("Pillow", "5.4.0")
+        pillow_ver_5_4_is_avail = pypi_module_version_is_available(
+            "Pillow", "5.4.0")
         if pillow_ver_5_4_is_avail == False:
-            print("5.4.0 is not yet available, other than the dev version on github, which can be installed via pip from git+https://github.com/python-pillow/Pillow. See https://docs.fast.ai/performance.html#libjpeg-turbo")
+            print(
+                "5.4.0 is not yet available, other than the dev version on github, which can be installed via pip from git+https://github.com/python-pillow/Pillow. See https://docs.fast.ai/performance.html#libjpeg-turbo"
+            )
 
     # Pillow-SIMD check
     print("\n*** Pillow-SIMD status")
     if re.search(r'\.post\d+', Image.PILLOW_VERSION):
         print(f"✔ Running Pillow-SIMD {Image.PILLOW_VERSION}")
     else:
-        print(f"✘ Running Pillow {Image.PILLOW_VERSION}; It's recommended you install Pillow-SIMD to speed up image resizing and other operations. See https://docs.fast.ai/performance.html#pillow-simd")
+        print(
+            f"✘ Running Pillow {Image.PILLOW_VERSION}; It's recommended you install Pillow-SIMD to speed up image resizing and other operations. See https://docs.fast.ai/performance.html#pillow-simd"
+        )
 
     # CUDA version check
     # compatibility table: k: min nvidia ver is required for v: cuda ver
@@ -183,22 +218,31 @@ def check_perf():
     # note: add new entries if pytorch starts supporting new cudaXX
     nvidia2cuda = {
         "410.00": "10.0",
-        "384.81":  "9.0",
-        "367.48":  "8.0",
+        "384.81": "9.0",
+        "367.48": "8.0",
     }
     print("\n*** CUDA status")
     if torch.cuda.is_available():
         pynvml = load_pynvml_env()
-        nvidia_ver = (pynvml.nvmlSystemGetDriverVersion().decode('utf-8') if platform.system() != "Darwin" else "Cannot be determined on OSX yet")
-        cuda_ver   = torch.version.cuda
+        nvidia_ver = (pynvml.nvmlSystemGetDriverVersion().decode('utf-8')
+                      if platform.system() != "Darwin" else
+                      "Cannot be determined on OSX yet")
+        cuda_ver = torch.version.cuda
         max_cuda = "8.0"
         for k in sorted(nvidia2cuda.keys()):
-            if version.parse(nvidia_ver) > version.parse(k): max_cuda = nvidia2cuda[k]
+            if version.parse(nvidia_ver) > version.parse(k):
+                max_cuda = nvidia2cuda[k]
         if version.parse(str(max_cuda)) <= version.parse(cuda_ver):
-            print(f"✔ Running the latest CUDA {cuda_ver} with NVIDIA driver {nvidia_ver}")
+            print(
+                f"✔ Running the latest CUDA {cuda_ver} with NVIDIA driver {nvidia_ver}"
+            )
         else:
-            print(f"✘ You are running pytorch built against cuda {cuda_ver}, your NVIDIA driver {nvidia_ver} supports cuda10. See https://pytorch.org/get-started/locally/ to install pytorch built against the faster CUDA version.")
+            print(
+                f"✘ You are running pytorch built against cuda {cuda_ver}, your NVIDIA driver {nvidia_ver} supports cuda10. See https://pytorch.org/get-started/locally/ to install pytorch built against the faster CUDA version."
+            )
     else:
         print(f"❓ Running cpu-only torch version, CUDA check is not relevant")
 
-    print("\nRefer to https://docs.fast.ai/performance.html to make sense out of these checks and suggestions.")
+    print(
+        "\nRefer to https://docs.fast.ai/performance.html to make sense out of these checks and suggestions."
+    )

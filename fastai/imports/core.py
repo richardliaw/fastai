@@ -6,7 +6,7 @@ import mimetypes, inspect, typing, functools, importlib, weakref
 import html, re, requests, tarfile, numbers, tempfile
 
 from abc import abstractmethod, abstractproperty
-from collections import abc,  Counter, defaultdict, Iterable, namedtuple, OrderedDict
+from collections import abc, Counter, defaultdict, Iterable, namedtuple, OrderedDict
 import concurrent
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from copy import copy, deepcopy
@@ -35,10 +35,14 @@ from typing import Any, AnyStr, Callable, Collection, Dict, Hashable, Iterator, 
 from typing import Sequence, Tuple, TypeVar, Union
 from types import SimpleNamespace
 
+
 def try_import(module):
     "Try to import `module`. Returns module's object on success, None on failure"
-    try: return importlib.import_module(module)
-    except: return None
+    try:
+        return importlib.import_module(module)
+    except:
+        return None
+
 
 def have_min_pkg_version(package, version):
     "Check whether we have at least `version` of `package`. Returns True on success, False otherwise."
